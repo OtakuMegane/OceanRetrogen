@@ -88,6 +88,7 @@ public class IterateChunks extends BukkitRunnable {
                 }
             } else {
                 // All done!
+                System.out.println("Retrogen for world " + this.mainWorld.getName() + " is done!");
                 this.cancel();
                 return;
             }
