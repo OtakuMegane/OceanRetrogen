@@ -57,8 +57,8 @@ public class IterateChunks extends BukkitRunnable {
     }
 
     public void status() {
-        System.out.println("Total chunks for main world: " + this.worldChunkMap.size() + ". Chunks completed: "
-                + this.plugin.finishedChunks.get(mainWorld).size());
+        System.out.println("Chunks completed: " + this.plugin.finishedChunks.get(mainWorld).size()
+                + ". Chunks remaining for main world: " + this.worldChunkMap.size() + ".");
     }
 
     @Override
