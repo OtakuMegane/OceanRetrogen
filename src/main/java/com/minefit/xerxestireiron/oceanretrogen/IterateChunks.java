@@ -63,8 +63,11 @@ public class IterateChunks extends BukkitRunnable {
 
     @Override
     public void run() {
+        ++this.tickDelay;
+
         if (this.tickDelay == 1000) {
             this.plugin.saveFinishedChunksMap(mainWorld);
+            this.tickDelay = 0;
         }
 
         while (true) {
