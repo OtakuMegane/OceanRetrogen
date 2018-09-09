@@ -1,0 +1,13 @@
+name: OceanRetrogen
+main: com.minefit.xerxestireiron.oceanretrogen.OceanRetrogen
+version: 1.0
+author: XerxesTireIron
+description: Retrogen for 1.13 Oceans
+load: postworld
+softdepend: [Multiverse-Core]
+api-version: 1.13
+
+commands:
+    retrogen:
+        description: 'Commands for OceanRetrogen'
+        usage: /retrogen start <main world name> <template world name>
