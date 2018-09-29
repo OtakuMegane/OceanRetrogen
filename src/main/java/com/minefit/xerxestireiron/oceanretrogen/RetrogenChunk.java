@@ -24,9 +24,9 @@ public class RetrogenChunk {
                     Block testBlock = toChunk.getBlock(x, y, z);
                     Block testBlock2 = fromChunk.getBlock(x, y, z);
 
-                    if (isMonumentPiece(testBlock)) {
+                    if (isMonumentPiece(testBlock) || isMonumentPiece(testBlock2)) {
                         isMonumentChunk = true;
-                        break;
+                        return true;
                     }
                 }
             }
@@ -48,7 +48,8 @@ public class RetrogenChunk {
                     mainWorld.setBiome(blockBaseX + x, blockBaseZ + z, biome2);
 
                     // If false, we are not over open, safe to modify ocean
-                    if (surfaceBlock.getType() != Material.WATER) {
+                    if (surfaceBlock.getType() != Material.WATER
+                            && surfaceBlock.getRelative(BlockFace.DOWN).getType() != Material.WATER) {
                         continue;
                     }
                 } else if (isBeach(biome1) && isBeach(biome2)) {
@@ -111,7 +112,7 @@ public class RetrogenChunk {
                             }
                         } else {
                             // Copy block, unless it would alter terrain heightmap in main world
-                            if (!atBottom2 && isWater(block)) {
+                            if (!atBottom2 && (isWater(block) || isAir(block))) {
                                 copyBlock(block, block2);
                             }
                         }
@@ -210,6 +211,10 @@ public class RetrogenChunk {
                 || biome == Biome.WARM_OCEAN;
     }
 
+    private static boolean isFrozenOcean(Biome biome) {
+        return biome == Biome.DEEP_FROZEN_OCEAN || biome == Biome.FROZEN_OCEAN;
+    }
+
     private static boolean isBeach(Biome biome) {
         return biome == Biome.BEACH || biome == Biome.SNOWY_BEACH;
     }
@@ -227,5 +232,10 @@ public class RetrogenChunk {
     private static boolean isAir(Block block) {
         Material blockType = block.getType();
         return blockType == Material.AIR;
+    }
+
+    private static boolean isIce(Block block) {
+        Material blockType = block.getType();
+        return blockType == Material.ICE || blockType == Material.PACKED_ICE;
     }
 }
