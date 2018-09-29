@@ -102,9 +102,9 @@ public class RetrogenChunk {
                             if (block2Type == Material.WATER) {
                                 if (biome2 == Biome.WARM_OCEAN || biome2 == Biome.DEEP_WARM_OCEAN
                                         || biome2 == Biome.LUKEWARM_OCEAN || biome2 == Biome.DEEP_LUKEWARM_OCEAN) {
-                                    block2.setType(Material.SAND);
+                                    block.setType(Material.SAND);
                                 } else {
-                                    block2.setType(Material.GRAVEL);
+                                    block.setType(Material.GRAVEL);
                                 }
                             } else {
                                 copyBlock(block, block2);
