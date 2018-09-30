@@ -130,7 +130,9 @@ public class RetrogenChunk {
                         } else {
                             // We don't want to copy a new monument or odd blocks on top of an existing one
                             if (isMonumentChunk) {
-                                continue;
+                                if (isMonumentPiece(block2) || isUnderwaterPlant(block2)) {
+                                    continue;
+                                }
                             }
 
                             // Should be a normal block to copy over
@@ -140,7 +142,7 @@ public class RetrogenChunk {
                         }
                     } else if (isBeach) {
                         // Copy blocks in beach unless it's air or water
-                        if (atBottomLayer) {
+                        if (isBottomLayerBlock(block)) {
                             if (!isAir(block2) && !isWater(block2)) {
                                 copyBlock(block, block2);
                                 continue;
@@ -148,8 +150,8 @@ public class RetrogenChunk {
                         }
 
                         if (blockType == Material.AIR || blockType == Material.WATER) {
-                            // Sometimes trees overhang the beach
-                            if (isLeaves(block2)) {
+                            // Sometimes trees overhang the beach; also avoid altering the terrain heightmap
+                            if (isLeaves(block2) || block2Type == Material.VINE || isBottomLayerBlock(block2)) {
                                 continue;
                             }
 

@@ -11,3 +11,5 @@ It was created based on a specific set of circumstances which apply to the serve
 Coordinates of all chunks successfully processed are stored in files in the plugin folder so if things are interrupted it will not redo the same chunks again. The retrogen is started with the command `/retrogen start <main world name> <template world name>` and can be stopped with `/retrogen stop <main world name>`.
 
 Running the retrogen will take a long time (possibly hours, even for smaller maps). If you have a large world, the process will likely lag out or crash the server after a while unless you've given it ridiculous amounts of memory. If this happens you should be able to restart and it will pick up roughly where it stopped.
+
+There will also be cleanup afterwards since there's no sane way to get 100% perfect detection and copy.
