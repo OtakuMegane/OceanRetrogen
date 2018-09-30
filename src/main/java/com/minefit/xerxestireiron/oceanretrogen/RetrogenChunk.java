@@ -22,11 +22,9 @@ public class RetrogenChunk {
             for (int z = 0; z < 16; z++) {
                 for (int y = 64; y > 0; y--) {
                     Block testBlock = toChunk.getBlock(x, y, z);
-                    Block testBlock2 = fromChunk.getBlock(x, y, z);
 
-                    if (isMonumentPiece(testBlock) || isMonumentPiece(testBlock2)) {
+                    if (isMonumentPiece(testBlock)) {
                         isMonumentChunk = true;
-                        return true;
                     }
                 }
             }
@@ -62,45 +60,64 @@ public class RetrogenChunk {
                     continue;
                 }
 
-                boolean atBottom = false;
-                boolean atBottom2 = false;
+                boolean atBottomLayer = false;
+                boolean atBottomLayer2 = false;
+                boolean atBedrock = false;
+                boolean atBedrock2 = false;
 
                 for (int y = 255; y > 0; --y) {
                     Block block = toChunk.getBlock(x, y, z);
                     Block block2 = fromChunk.getBlock(x, y, z);
+                    Block blockDown = toChunk.getBlock(x, y - 1, z);
+                    Block blockDown2 = fromChunk.getBlock(x, y - 1, z);
                     Material blockType = block.getType();
                     Material block2Type = block2.getType();
-                    atBottom = (atBottom) ? atBottom : isTopLayer(block);
-                    atBottom2 = (atBottom2) ? atBottom2 : isTopLayer(block2);
 
-                    if (atBottom) {
-                        // Copy over buried chests
-                        if (isChest(block2)) {
-                            copyBlock(block, block2);
-                            continue;
-                        }
+                    // High probability this isn't natural and we want to leave it alone
+                    if (!isWater(block) && !isAir(block) && !isBottomLayerBlock(block) && !isBedrockBlock(block)
+                            && !isUnderwaterPlant(block)) {
+                        continue;
+                    }
 
-                        if (!isTopLayer(block)) {
-                            break;
+                    // We've reached bedrock in the target world
+                    if (isBedrockBlock(block)) {
+                        if (atBottomLayer || isBedrockBlock(blockDown)) {
+                            atBedrock = true;
                         }
                     }
 
-                    // If we're into rock, we're done
-                    if (atBottom2 && !isTopLayer(block2)) {
+                    // We've reached bedrock in the template world
+                    if (isBedrockBlock(block2)) {
+                        if (atBottomLayer2 || isBedrockBlock(blockDown2)) {
+                            atBedrock2 = true;
+                        }
+                    }
+
+                    // We've reached a bottom layer block in the target world with bedrock beneath
+                    if (isBottomLayerBlock(block) && (isBottomLayerBlock(blockDown) || isBedrockBlock(blockDown))) {
+                        atBottomLayer = true;
+                    }
+
+                    // We've reached a bottom layer block in thes template world with bedrock beneath
+                    if (isBottomLayerBlock(block2) && isBedrockBlock(blockDown2)) {
+                        atBottomLayer2 = true;
+                    }
+
+                    // We are at bedrock and finished with this column
+                    if (atBedrock || atBedrock2) {
+                        // Copy over buried chests
+                        if (isChest(block2)) {
+                            copyBlock(block, block2);
+                        }
+
                         break;
                     }
 
                     if (isOcean) {
-                        if (isMonumentChunk) {
-                            // We don't want to copy a new monument on top of an existing one
-                            if (isMonumentPiece(block) || isMonumentPiece(block2)) {
-                                continue;
-                            }
-                        }
-
-                        if (atBottom) {
+                        // We are either at the bottom layer or have hit a block that could be part of it
+                        if (atBottomLayer) {
                             // Fill in top level where caves or ravines would be
-                            if (block2Type == Material.WATER) {
+                            if (isWater(block2) || isUnderwaterPlant(block2)) {
                                 if (biome2 == Biome.WARM_OCEAN || biome2 == Biome.DEEP_WARM_OCEAN
                                         || biome2 == Biome.LUKEWARM_OCEAN || biome2 == Biome.DEEP_LUKEWARM_OCEAN) {
                                     block.setType(Material.SAND);
@@ -111,14 +128,19 @@ public class RetrogenChunk {
                                 copyBlock(block, block2);
                             }
                         } else {
-                            // Copy block, unless it would alter terrain heightmap in main world
-                            if (!atBottom2 && (isWater(block) || isAir(block))) {
+                            // We don't want to copy a new monument or odd blocks on top of an existing one
+                            if (isMonumentChunk) {
+                                continue;
+                            }
+
+                            // Should be a normal block to copy over
+                            if (isWater(block) || isAir(block)) {
                                 copyBlock(block, block2);
                             }
                         }
                     } else if (isBeach) {
                         // Copy blocks in beach unless it's air or water
-                        if (atBottom) {
+                        if (atBottomLayer) {
                             if (!isAir(block2) && !isWater(block2)) {
                                 copyBlock(block, block2);
                                 continue;
@@ -134,7 +156,7 @@ public class RetrogenChunk {
                             copyBlock(block, block2);
                         }
                     } else if (isRiver) {
-                        if (!atBottom) {
+                        if (!atBottomLayer) {
                             if (blockType == Material.WATER) {
                                 if (block2Type == Material.SEAGRASS || block2Type == Material.TALL_SEAGRASS) {
                                     copyBlock(block, block2);
@@ -142,7 +164,7 @@ public class RetrogenChunk {
                             }
                         }
                     } else if (isSwamp) {
-                        if (!atBottom) {
+                        if (!atBottomLayer) {
                             if (blockType == Material.WATER) {
                                 if (block2Type == Material.SEAGRASS || block2Type == Material.TALL_SEAGRASS) {
                                     copyBlock(block, block2);
@@ -191,7 +213,7 @@ public class RetrogenChunk {
                 || blockType == Material.SEA_LANTERN;
     }
 
-    private static boolean isTopLayer(Block block) {
+    private static boolean isBottomLayerBlock(Block block) {
         Material blockType = block.getType();
         return blockType == Material.SAND || blockType == Material.GRAVEL || blockType == Material.DIRT
                 || blockType == Material.CLAY;
@@ -209,10 +231,6 @@ public class RetrogenChunk {
                 || biome == Biome.DEEP_FROZEN_OCEAN || biome == Biome.DEEP_LUKEWARM_OCEAN || biome == Biome.DEEP_OCEAN
                 || biome == Biome.DEEP_WARM_OCEAN || biome == Biome.FROZEN_OCEAN || biome == Biome.LUKEWARM_OCEAN
                 || biome == Biome.WARM_OCEAN;
-    }
-
-    private static boolean isFrozenOcean(Biome biome) {
-        return biome == Biome.DEEP_FROZEN_OCEAN || biome == Biome.FROZEN_OCEAN;
     }
 
     private static boolean isBeach(Biome biome) {
@@ -234,8 +252,17 @@ public class RetrogenChunk {
         return blockType == Material.AIR;
     }
 
-    private static boolean isIce(Block block) {
+    private static boolean isUnderwaterPlant(Block block) {
         Material blockType = block.getType();
-        return blockType == Material.ICE || blockType == Material.PACKED_ICE;
+        return blockType == Material.KELP || blockType == Material.KELP_PLANT || blockType == Material.SEAGRASS
+                || blockType == Material.TALL_SEAGRASS;
+    }
+
+    private static boolean isBedrockBlock(Block block) {
+        Material blockType = block.getType();
+        return blockType == Material.STONE || blockType == Material.GRANITE || blockType == Material.DIORITE
+                || blockType == Material.ANDESITE || blockType == Material.COAL_ORE || blockType == Material.IRON_ORE
+                || blockType == Material.GOLD_ORE || blockType == Material.LAPIS_ORE
+                || blockType == Material.REDSTONE_ORE || blockType == Material.DIAMOND_ORE;
     }
 }
