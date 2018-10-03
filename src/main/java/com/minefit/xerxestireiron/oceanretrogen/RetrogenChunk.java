@@ -15,16 +15,32 @@ public class RetrogenChunk {
         Chunk fromChunk = templateWorld.getChunkAt(chunkX, chunkZ);
         int blockBaseX = chunkX * 16;
         int blockBaseZ = chunkZ * 16;
+        int monumentPieceCount = 0;
+        int monumentPieceCount2 = 0;
         boolean isMonumentChunk = false;
+        boolean isMonumentChunk2 = false;
 
         // Test to see if we're near an existing ocean monument
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 for (int y = 64; y > 0; y--) {
                     Block testBlock = toChunk.getBlock(x, y, z);
+                    Block testBlock2 = fromChunk.getBlock(x, y, z);
 
                     if (isMonumentPiece(testBlock)) {
+                        ++monumentPieceCount;
+                    }
+
+                    if (isMonumentPiece(testBlock2)) {
+                        ++monumentPieceCount;
+                    }
+
+                    if (monumentPieceCount > 8) {
                         isMonumentChunk = true;
+                    }
+
+                    if (monumentPieceCount2 > 8) {
+                        isMonumentChunk2 = true;
                     }
                 }
             }
@@ -75,7 +91,7 @@ public class RetrogenChunk {
 
                     // High probability this isn't natural and we want to leave it alone
                     if (!isWater(block) && !isAir(block) && !isBottomLayerBlock(block) && !isBedrockBlock(block)
-                            && !isUnderwaterPlant(block)) {
+                            && !isUnderwaterPlant(block) ) {
                         continue;
                     }
 
@@ -117,7 +133,8 @@ public class RetrogenChunk {
                         // We are either at the bottom layer or have hit a block that could be part of it
                         if (atBottomLayer) {
                             // Fill in top level where caves or ravines would be
-                            if (isWater(block2) || isUnderwaterPlant(block2)) {
+                            if (isWater(block2) || isUnderwaterPlant(block2)
+                                    || (isMonumentChunk2 && isMonumentPiece(block2))) {
                                 if (biome2 == Biome.WARM_OCEAN || biome2 == Biome.DEEP_WARM_OCEAN
                                         || biome2 == Biome.LUKEWARM_OCEAN || biome2 == Biome.DEEP_LUKEWARM_OCEAN) {
                                     block.setType(Material.SAND);
@@ -141,20 +158,22 @@ public class RetrogenChunk {
                             }
                         }
                     } else if (isBeach) {
-                        // Copy blocks in beach unless it's air or water
-                        if (isBottomLayerBlock(block)) {
-                            if (!isAir(block2) && !isWater(block2)) {
-                                copyBlock(block, block2);
-                                continue;
-                            }
+                        // Copy blocks in beach unless it's non-solid
+                        if (isAir(block2) || isWater(block2) || isUnderwaterPlant(block2)) {
+                            continue;
                         }
 
                         if (blockType == Material.AIR || blockType == Material.WATER) {
-                            // Sometimes trees overhang the beach; also avoid altering the terrain heightmap
-                            if (isLeaves(block2) || block2Type == Material.VINE || isBottomLayerBlock(block2)) {
+                            // Sometimes trees overhang the beach so minimize that mess; also avoid altering the terrain heightmap
+                            if (isLeaves(block2) || block2Type == Material.VINE || isBottomLayerBlock(block2)
+                                    || isBedrockBlock(block2)) {
                                 continue;
                             }
 
+                            copyBlock(block, block2);
+                        }
+
+                        if (isChest(block2)) {
                             copyBlock(block, block2);
                         }
                     } else if (isRiver) {
@@ -265,6 +284,7 @@ public class RetrogenChunk {
         return blockType == Material.STONE || blockType == Material.GRANITE || blockType == Material.DIORITE
                 || blockType == Material.ANDESITE || blockType == Material.COAL_ORE || blockType == Material.IRON_ORE
                 || blockType == Material.GOLD_ORE || blockType == Material.LAPIS_ORE
-                || blockType == Material.REDSTONE_ORE || blockType == Material.DIAMOND_ORE;
+                || blockType == Material.REDSTONE_ORE || blockType == Material.DIAMOND_ORE
+                || blockType == Material.SANDSTONE;
     }
 }
